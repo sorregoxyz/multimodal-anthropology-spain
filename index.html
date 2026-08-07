@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Antropología multimodal en España — un inventario cartográfico</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Work+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FFFFFF;
+    --paper-deep:#F4F4F4;
+    --ink:#1A1A1A;
+    --ink-soft:#767676;
+    --line:#E2E2E2;
+    --group:#FDD63D;
+    --individual:#F75232;
+    --project:#2971AB;
+    --unverified:#9B9B9B;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;background:var(--paper);color:var(--ink);font-family:'Work Sans',sans-serif;}
+  #app{display:flex;flex-direction:column;height:100vh;}
+
+  header{
+    padding:18px 22px 14px;
+    border-bottom:1px solid var(--line);
+    background:var(--paper);
+  }
+  .header-top{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:16px;
+  }
+  header h1{
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:700;
+    font-size:22px;
+    margin:0 0 4px;
+    letter-spacing:0.1px;
+  }
+  .lang-switch{display:flex;gap:2px;flex-shrink:0;}
+  .lang-btn{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    padding:4px 9px;
+    border:1px solid var(--line);
+    background:var(--paper);
+    color:var(--ink-soft);
+    cursor:pointer;
+  }
+  .lang-btn[aria-pressed="true"]{
+    background:var(--ink);
+    color:var(--paper);
+    border-color:var(--ink);
+  }
+  header p{
+    font-size:13.5px;
+    line-height:1.5;
+    color:var(--ink-soft);
+    max-width:760px;
+    margin:6px 0 12px;
+  }
+  .chips{display:flex;flex-wrap:wrap;gap:8px;}
+  .chip{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    padding:5px 10px;
+    border:1px solid var(--line);
+    border-radius:0;
+    cursor:pointer;
+    background:transparent;
+    color:var(--ink);
+    display:flex;align-items:center;gap:6px;
+    user-select:none;
+  }
+  .chip .dot{width:8px;height:8px;border-radius:50%;display:inline-block;}
+  .chip[data-active="false"]{opacity:0.35;}
+  .chip.groups .dot{background:var(--group);}
+  .chip.individuals .dot{background:var(--individual);}
+  .chip.projects .dot{background:var(--project);}
+
+  main{flex:1;display:flex;min-height:0;}
+  #sidebar{
+    width:340px;
+    min-width:280px;
+    border-right:1px solid var(--line);
+    display:flex;flex-direction:column;
+    background:var(--paper);
+  }
+  #search{
+    margin:14px 14px 8px;
+    padding:8px 10px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    border:1px solid var(--line);
+    border-radius:0;
+    background:var(--paper-deep);
+    color:var(--ink);
+  }
+  #search::placeholder{color:var(--ink-soft);}
+  #list{overflow-y:auto;flex:1;padding:4px 10px 20px;}
+  .group-label{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10.5px;
+    text-transform:uppercase;
+    letter-spacing:0.1em;
+    color:var(--ink-soft);
+    margin:16px 4px 6px;
+  }
+  .card{
+    border:1px solid var(--line);
+    border-left:3px solid var(--ink-soft);
+    background:var(--paper-deep);
+    padding:9px 10px;
+    margin-bottom:7px;
+    border-radius:0;
+    cursor:pointer;
+    transition:transform .12s ease;
+  }
+  .card:hover{transform:translateX(2px);}
+  .card.dashed{border-left-style:dashed;}
+  .card.type-group{border-left-color:var(--group);}
+  .card.type-individual{border-left-color:var(--individual);}
+  .card.type-project{border-left-color:var(--project);}
+  .card .name{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:600;line-height:1.25;}
+  .card .meta{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--ink-soft);margin-top:3px;}
+  .card .flag{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:9.5px;
+    color:var(--unverified);
+    margin-top:4px;
+  }
+
+  #map{flex:1;}
+  .leaflet-popup-content-wrapper{
+    background:var(--paper);
+    border-radius:0;
+    border:1px solid var(--line);
+    box-shadow:0 2px 10px rgba(0,0,0,0.08);
+  }
+  .leaflet-popup-content{font-family:'Work Sans',sans-serif;font-size:13px;margin:12px 14px;line-height:1.45;}
+  .popup-tag{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:9.5px;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    color:var(--ink-soft);
+    display:block;margin-bottom:4px;
+  }
+  .popup-name{font-family:'Space Grotesk',sans-serif;font-size:17px;font-weight:700;margin-bottom:2px;}
+  .popup-sub{color:var(--ink-soft);font-size:12px;margin-bottom:8px;}
+  .popup-verify{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--unverified);margin-top:6px;}
+  .popup-link{display:inline-block;margin-top:8px;font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--ink);border-bottom:1px solid var(--ink);}
+
+  .node-marker{border-radius:50%;border:2px solid var(--paper);box-shadow:0 0 0 1px var(--line);}
+  .node-marker.dashed{border-style:dashed;border-color:var(--unverified);}
+
+  .reset-view-btn{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    padding:6px 10px;
+    border:1px solid var(--line);
+    background:var(--paper);
+    color:var(--ink);
+    cursor:pointer;
+    box-shadow:0 1px 4px rgba(0,0,0,0.12);
+  }
+  .reset-view-btn:hover{background:var(--paper-deep);}
+
+  footer{
+    border-top:1px solid var(--line);
+    padding:10px 22px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10.5px;
+    color:var(--ink-soft);
+    line-height:1.5;
+    background:var(--paper);
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    gap:12px;
+  }
+  footer a{color:var(--ink-soft);}
+  .footer-year{flex-shrink:0;white-space:nowrap;}
+
+  @media (max-width:900px){
+    #sidebar{width:250px;min-width:220px;}
+  }
+
+  .mobile-view-toggle{display:none;}
+  .view-btn{
+    flex:1;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    padding:10px 0;
+    border:1px solid var(--line);
+    background:var(--paper);
+    color:var(--ink-soft);
+    cursor:pointer;
+  }
+  .view-btn[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink);}
+
+  @media (max-width:600px){
+    header{padding:14px 16px 10px;}
+    header h1{font-size:19px;}
+    header p{font-size:12.5px;line-height:1.45;margin:4px 0 10px;}
+    .chips{gap:6px;}
+    .chip{font-size:10.5px;padding:6px 8px;}
+
+    .mobile-view-toggle{display:flex;gap:8px;padding:8px 16px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);}
+
+    main{flex-direction:column;}
+    #sidebar{width:100%;flex:1;min-height:0;overflow:hidden;border-right:none;}
+    #map{flex:1;}
+    #app.mv-map #sidebar{display:none;}
+    #app.mv-list #map{display:none;}
+  }
+</style>
+</head>
+<body>
+<div id="app" class="mv-map">
+
+  <header>
+    <div class="header-top">
+      <h1 id="siteTitle">Antropología multimodal en España</h1>
+      <div class="lang-switch">
+        <button class="lang-btn" data-lang="es" aria-pressed="true">ES</button>
+        <button class="lang-btn" data-lang="en" aria-pressed="false">EN</button>
+      </div>
+    </div>
+    <p id="siteIntro">Un mapa interactivo de dónde se hace antropología multimodal hoy en España. Encuentra grupos, personas y proyectos. Este artefacto se ha construido a partir de información pública como las páginas web de las universidades españolas y la Red de Antropología Multimodal (ASAEE). Las ubicaciones son aproximadas, a nivel de ciudad. El mapa está en constante expansión; si tu proyecto falta, escríbenos a [por definir].</p>
+    <div class="chips">
+      <button class="chip groups" data-type="group" data-active="true"><span class="dot"></span><span data-i18n="chipGroup">Grupos e instituciones</span></button>
+      <button class="chip individuals" data-type="individual" data-active="true"><span class="dot"></span><span data-i18n="chipIndividual">Personas</span></button>
+      <button class="chip projects" data-type="project" data-active="true"><span class="dot"></span><span data-i18n="chipProject">Proyectos</span></button>
+    </div>
+  </header>
+
+  <div class="mobile-view-toggle">
+    <button class="view-btn" id="viewMapBtn" data-view="map" aria-pressed="true">Mapa</button>
+    <button class="view-btn" id="viewListBtn" data-view="list" aria-pressed="false">Lista</button>
+  </div>
+
+  <main>
+    <div id="sidebar">
+      <input id="search" type="text" placeholder="Buscar por nombre, ciudad, institución…">
+      <div id="list"></div>
+    </div>
+    <div id="map"></div>
+  </main>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<script>
+
+let DATA = [];
+
+Papa.parse("data_multimodality.csv", {
+    download: true,
+    header: true,
+    delimiter: ";",
+
+    complete: function(results) {
+        DATA = results.data;
+
+        console.log("CSV loaded!");
+        console.log(DATA);
+
+        applyLang();
+
+    }
+
+});
+
+// ---------------------------------------------------------------
+// IDIOMA
+// ---------------------------------------------------------------
+const I18N = {
+  es: {
+    docTitle:'Antropología multimodal en España — mapa interactivo',
+    h1:'Antropología multimodal en España',
+    intro:'Un mapa interactivo de dónde se hace antropología multimodal hoy en España. Encuentra grupos, personas y proyectos. Este artefacto se ha construido a partir de información pública como las páginas web de las universidades españolas y la Red de Antropología Multimodal (ASAEE). Las ubicaciones son aproximadas, a nivel de ciudad. El mapa está en constante expansión; si tu proyecto falta, escríbenos a [por definir].',
+    footer:'Este inventario se construye a partir de fuentes públicas y se encuentra bajo la licencia CC BY-SA 4.0.',
+    chipGroup:'Grupos e instituciones', chipIndividual:'Personas', chipProject:'Proyectos',
+    searchPlaceholder:'Buscar por nombre, ciudad, institución…',
+    popupTag:{group:'Grupo / institución', individual:'Persona', project:'Proyecto'},
+    verifyPartial:'⚠ afiliación confirmada, enlace directo pendiente',
+    verifyConfirm:'⚠ dato pendiente de verificar antes de publicar',
+    flagConfirm:'pendiente de verificar', flagPartial:'enlace pendiente',
+    resetView:'Vista general',
+    viewMap:'Mapa', viewList:'Lista'
+  },
+  en: {
+    docTitle:'Multimodal Anthropology in Spain — interactive map',
+    h1:'Multimodal anthropology in Spain',
+    intro:"An interactive map of where multimodal anthropology happens in Spain today. Find groups, people and projects. This artefact was built from public information such as Spanish universities' websites and the Multimodal Anthropology Network (ASAEE). Locations are approximate, at city level. The map keeps growing; if your project is missing, write to us at [to define].",
+    footer:'This inventory is built from public sources and is released under a CC BY-SA 4.0 licence.',
+    chipGroup:'Groups & institutions', chipIndividual:'People', chipProject:'Projects',
+    searchPlaceholder:'Search by name, city, institution…',
+    popupTag:{group:'Group / institution', individual:'Person', project:'Project'},
+    verifyPartial:'⚠ affiliation confirmed, direct link pending',
+    verifyConfirm:'⚠ pending verification before publishing',
+    flagConfirm:'pending verification', flagPartial:'link pending',
+    resetView:'Reset view',
+    viewMap:'Map', viewList:'List'
+  }
+};
+let lang = 'es';
+const tr = (node, field) => (lang === 'en' && node[field+'_en']) ? node[field+'_en'] : node[field];
+
+// ---------------------------------------------------------------
+// MAPA
+// ---------------------------------------------------------------
+const map = L.map('map', {zoomControl:true}).setView([40.2, -3.5], 6);
+const INITIAL_VIEW = {center:[40.2, -3.5], zoom:6};
+
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+  attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+  subdomains: 'abcd',
+  maxZoom: 19
+}).addTo(map);
+
+const ResetViewControl = L.Control.extend({
+  options: {position: 'topright'},
+  onAdd: function(){
+    const btn = L.DomUtil.create('button', 'reset-view-btn');
+    btn.id = 'resetViewBtn';
+    btn.type = 'button';
+    btn.textContent = I18N[lang].resetView;
+    L.DomEvent.disableClickPropagation(btn);
+    L.DomEvent.on(btn, 'click', () => {
+      map.setView(INITIAL_VIEW.center, INITIAL_VIEW.zoom, {animate: true});
+    });
+    return btn;
+  }
+});
+map.addControl(new ResetViewControl());
+
+const colors = {group:'#FDD63D', individual:'#F75232', project:'#2971AB'};
+
+function makeIcon(node){
+  const dashed = node.verified === 'confirmar' ? ' dashed' : '';
+  const size = node.type === 'group' ? 16 : 12;
+  return L.divIcon({
+    className: '',
+    html: `<div class="node-marker${dashed}" style="width:${size}px;height:${size}px;background:${colors[node.type]};"></div>`,
+    iconSize: [size, size],
+    iconAnchor: [size/2, size/2],
+    popupAnchor: [0, -size/2]
+  });
+}
+
+function popupHTML(node){
+  const t = I18N[lang];
+  const verifyNote = node.verified === 'parcial' ? `<div class="popup-verify">${t.verifyPartial}</div>`
+    : node.verified === 'confirmar' ? `<div class="popup-verify">${t.verifyConfirm}</div>` : '';
+  const link = node.link ? `<a class="popup-link" href="${node.link}" target="_blank" rel="noopener">${tr(node,'linkLabel')} ↗</a>` : '';
+  return `<span class="popup-tag">${t.popupTag[node.type]}</span>
+    <div class="popup-name">${node.name}</div>
+    <div class="popup-sub">${tr(node,'subtitle')}</div>
+    <div>${tr(node,'desc')}</div>
+    ${verifyNote}${link}`;
+}
+
+const markerLayer = L.layerGroup().addTo(map);
+const markers = {};
+
+function buildMarkers(){
+  markerLayer.clearLayers();
+  DATA.forEach(node => {
+    if(node.lat == null || !activeTypes.has(node.type)) return;
+    const m = L.marker([node.lat, node.lng], {icon: makeIcon(node)});
+    m.bindPopup(popupHTML(node));
+    m.addTo(markerLayer);
+    markers[node.id] = m;
+  });
+}
+
+// ---------------------------------------------------------------
+// SIDEBAR
+// ---------------------------------------------------------------
+const activeTypes = new Set(['group','individual','project']);
+let query = '';
+
+function renderList(){
+  const t = I18N[lang];
+  const list = document.getElementById('list');
+  list.innerHTML = '';
+  const groups = {
+    group: {label:t.chipGroup, items:[]},
+    individual: {label:t.chipIndividual, items:[]},
+    project: {label:t.chipProject, items:[]}
+  };
+  DATA.filter(n => activeTypes.has(n.type))
+      .filter(n => {
+        const q = query.toLowerCase();
+        return !q || (n.name+' '+tr(n,'subtitle')+' '+(n.city||'')+' '+tr(n,'desc')).toLowerCase().includes(q);
+      })
+      .forEach(n => groups[n.type].items.push(n));
+
+  Object.entries(groups).forEach(([type, g]) => {
+    if(g.items.length === 0) return;
+    const h = document.createElement('div');
+    h.className = 'group-label';
+    h.textContent = g.label + ' (' + g.items.length + ')';
+    list.appendChild(h);
+    g.items.forEach(n => {
+      const card = document.createElement('div');
+      card.className = 'card type-' + n.type + (n.verified === 'confirmar' ? ' dashed' : '');
+      const flagText = n.verified === 'confirmar' ? t.flagConfirm : n.verified === 'parcial' ? t.flagPartial : '';
+      card.innerHTML = `<div class="name">${n.name}</div>
+        <div class="meta">${tr(n,'subtitle')}</div>
+        ${flagText ? '<div class="flag">⚠ ' + flagText + '</div>' : ''}`;
+      card.addEventListener('click', () => {
+        if(n.lat != null){
+          map.flyTo([n.lat, n.lng], 11, {duration:0.6});
+          markers[n.id].openPopup();
+          if(window.matchMedia('(max-width:600px)').matches) setMobileView('map');
+        }
+      });
+      list.appendChild(card);
+    });
+  });
+}
+
+// ---------------------------------------------------------------
+// VISTA MOVIL: alternar entre mapa y lista a pantalla completa
+// ---------------------------------------------------------------
+const appEl = document.getElementById('app');
+function setMobileView(view){
+  appEl.classList.toggle('mv-map', view === 'map');
+  appEl.classList.toggle('mv-list', view === 'list');
+  document.getElementById('viewMapBtn').setAttribute('aria-pressed', view === 'map');
+  document.getElementById('viewListBtn').setAttribute('aria-pressed', view === 'list');
+  if(view === 'map') map.invalidateSize();
+}
+document.getElementById('viewMapBtn').addEventListener('click', () => setMobileView('map'));
+document.getElementById('viewListBtn').addEventListener('click', () => setMobileView('list'));
+
+document.querySelectorAll('.chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    const type = chip.dataset.type;
+    if(activeTypes.has(type)) activeTypes.delete(type); else activeTypes.add(type);
+    chip.dataset.active = activeTypes.has(type);
+    buildMarkers();
+    renderList();
+  });
+});
+
+document.getElementById('search').addEventListener('input', e => {
+  query = e.target.value;
+  renderList();
+});
+
+function applyLang(){
+  const t = I18N[lang];
+  document.title = t.docTitle;
+  document.getElementById('siteTitle').textContent = t.h1;
+  document.getElementById('siteIntro').textContent = t.intro;
+  document.getElementById('search').placeholder = t.searchPlaceholder;
+  document.querySelector('[data-i18n="chipGroup"]').textContent = t.chipGroup;
+  document.querySelector('[data-i18n="chipIndividual"]').textContent = t.chipIndividual;
+  document.querySelector('[data-i18n="chipProject"]').textContent = t.chipProject;
+  document.querySelectorAll('.lang-btn').forEach(b => b.setAttribute('aria-pressed', b.dataset.lang === lang));
+  const resetBtn = document.getElementById('resetViewBtn');
+  if(resetBtn) resetBtn.textContent = t.resetView;
+  document.getElementById('viewMapBtn').textContent = t.viewMap;
+  document.getElementById('viewListBtn').textContent = t.viewList;
+  buildMarkers();
+  renderList();
+}
+
+document.querySelectorAll('.lang-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if(btn.dataset.lang === lang) return;
+    lang = btn.dataset.lang;
+    applyLang();
+  });
+});
+
+
+</script>
+</body>
+</html>
