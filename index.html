@@ -263,7 +263,6 @@ let DATA = [];
 Papa.parse("data/data_multimodality.csv", {
     download: true,
     header: true,
-    delimiter: ";",
 
     complete: function(results) {
         DATA = results.data;
