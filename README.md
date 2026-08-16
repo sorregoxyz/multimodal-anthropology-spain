@@ -1,3 +1,5 @@
+![header](https://sorrego.net/wp-content/uploads/multimodal-header.jpg)
+
 # Multimodal Anthropology in Spain
 
 An interactive map documenting researchers, groups and projects working on multimodal anthropology in Spain.
