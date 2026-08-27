@@ -318,13 +318,10 @@ const tr = (node, field) => (lang === 'en' && node[field+'_en']) ? node[field+'_
 const map = L.map('map', {zoomControl:true}).setView([40.2, -3.5], 6);
 const INITIAL_VIEW = {center:[40.2, -3.5], zoom:6};
 
-L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
-  attribution: 'Tiles &copy; Esri &mdash; Esri, HERE, Garmin, FAO, NOAA, USGS &amp; OpenStreetMap contributors',
-  maxZoom: 16
-}).addTo(map);
-
-L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {
-  maxZoom: 16
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png?key=cb1_2dzs_1_b375c5986d79e426dee8a1ac', {
+  attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+  subdomains: 'abcd',
+  maxZoom: 19
 }).addTo(map);
 
 const ResetViewControl = L.Control.extend({
