@@ -6,6 +6,8 @@ An interactive map documenting researchers, groups and projects working on multi
 
 The map is built from a CSV dataset and rendered dynamically using JavaScript and Leaflet.
 
+Access the map here --> https://sorregoxyz.github.io/multimodal-anthropology-spain/
+
 ## Structure
 
 - `index.html` — interactive map
