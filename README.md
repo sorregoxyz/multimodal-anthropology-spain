@@ -6,7 +6,7 @@ An interactive map documenting researchers, groups and projects working on multi
 
 The map is built from a CSV dataset and rendered dynamically using JavaScript and Leaflet.
 
-Access the map here --> https://sorregoxyz.github.io/multimodal-anthropology-spain/  
+**Access the map here -->** https://sorregoxyz.github.io/multimodal-anthropology-spain/  
 
 Locations are approximate, at city level, not exact addresses. When several nodes share a city, they're spread out visually around it so they can be told apart; that spread is a visual device only and doesn't indicate a distinct real position.
 
